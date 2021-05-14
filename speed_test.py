@@ -1,8 +1,8 @@
 '''
 Python Speed Test
 
-An automatable Python script that can be used to
-execute a network speed test and log the results
+A Python script to execute an internet speed test using speedtest.net.
+Results are saved to a csv for future reference and analysis.
 '''
 import os
 import ssl
@@ -10,6 +10,10 @@ import speedtest
 import pandas as pd
 import datetime as dt
 
+# Output file
+output_file = 'results.csv'
+
+# Create HTTPS context to mitigate SSL issues
 if (not os.environ.get(
     'PYTHONHTTPSVERIFY', '') and getattr(
         ssl, '_create_unverified_context', None)):
@@ -17,6 +21,7 @@ if (not os.environ.get(
 
 
 def execute_test():
+    # Execute speed test
     s = speedtest.Speedtest()
     s.get_servers()
     s.get_best_server()
@@ -29,17 +34,22 @@ def execute_test():
 def main():
 
     print('\nRunning speedtest...')
+    # Execute speed test, creating download, upload, and ping variables
     d, u, p = execute_test()
 
+    # Print results to console, converting download and upload from b to Mb
     print('\nTest\n')
     print('Download: {:.2f} Mb/s\n'.format(d / (1024 * 1024)))
     print('Upload: {:.2f} Mb/s\n'.format(u / (1024 * 1024)))
     print('Ping: {}\n'.format(p))
 
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    if os.path.isfile('results.csv'):
-        df = pd.read_csv('results.csv', skip_blank_lines=True)
+    # Check that output_file exists
+    if os.path.isfile(output_file):
+        # If file exits, read contents to data frame
+        df = pd.read_csv(output_file, skip_blank_lines=True)
     else:
+        # If file does nont exist, create empty data frame to store new values
         df = pd.DataFrame({
             'Date': [],
             'Service': [],
@@ -48,6 +58,7 @@ def main():
             'Ping': []
         })
 
+    # Add new results to data frame
     df = df.append(
         pd.DataFrame({
             'Date': [dt.datetime.now().strftime("%Y/%m/%d %H:%M:%S")],
@@ -58,8 +69,9 @@ def main():
         })
     )
 
+    # Write results to csv
     df.to_csv(
-        'results.csv',
+        output_file,
         index=False)
 
 
